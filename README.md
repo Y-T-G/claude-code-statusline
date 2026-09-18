@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <img alt="minimal mode" src="assets/minimal.svg">
+  <img alt="minimal mode" src="assets/minimal.png">
 </p>
 
 ## Modes
@@ -24,7 +24,7 @@
 | `minimal` (default) | model, context window, 5 hour budget left, spend limit left when one applies |
 | `full` | model, directory, context window, 5 hour budget left, 7 day budget left, spend limit left, session cost |
 
-<img alt="full mode" src="assets/full.svg">
+<img alt="full mode" src="assets/full.png">
 
 Percentages are colored by how much is used: green below 70%, orange to 90%, red above.
 
@@ -81,7 +81,7 @@ come from the account usage endpoint. Pass `usage-api` to read them too:
 ./install.sh minimal usage-api
 ```
 
-<img alt="usage-api mode" src="assets/usage-api.svg">
+<img alt="usage-api mode" src="assets/usage-api.png">
 
 Each extra window is labeled with its own name (`fable`, `opus`, `sonnet`) and is shown
 only while the account reports it, so nothing appears if your plan has no such window.
@@ -118,7 +118,7 @@ output is appended. Example that adds the git branch:
 git branch --show-current 2>/dev/null
 ```
 
-The screenshots above are generated from real output with `assets/render.py`.
+The screenshots above are generated from real output with `assets/render.py`, which needs `cairosvg`.
 
 ## License
 

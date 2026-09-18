@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="472" height="87" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
-  <rect width="100%" height="100%" rx="10" fill="#17171b"/>
-  <rect x="10" y="12" width="452" height="27" rx="6" fill="none" stroke="#3a3a42"/>
-  <text x="18" y="33" font-size="15.0" fill="#6b6b76">&gt; minimal mode</text>
-  <text x="18" y="60" font-size="15.0" xml:space="preserve"><tspan fill="#5fafff">Opus 5</tspan><tspan fill="#444444"> | </tspan><tspan fill="#585858">ctx </tspan><tspan fill="#87af87">45.2k/1M 4%</tspan><tspan fill="#444444"> | </tspan><tspan fill="#585858">5h </tspan><tspan fill="#87af87">78% left</tspan><tspan fill="#e6e6e6"> </tspan><tspan fill="#585858">(2h29m)</tspan></text>
-</svg>

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Render the status line output as an SVG, so the README shows real output.
+"""Render the status line output as a PNG, so the README shows real output.
 
-Usage: statusline.sh full | python3 assets/render.py assets/full.svg "full mode"
+Usage: statusline.sh full | python3 assets/render.py assets/full.png "full mode"
+
+Needs cairosvg (pip install cairosvg) and a monospace font. Without cairosvg it
+writes the intermediate SVG next to the target instead.
 """
 import math, re, sys
 
@@ -31,23 +34,26 @@ def spans(line: str):
     return out
 
 
-# 0.62em is a safe advance for the monospace fallbacks, so nothing clips
 SIZE, PAD = 15.0, 18.0
-CHAR_W = SIZE * 0.62
+CHAR_W = SIZE * 0.6  # the advance of the monospace fonts below
+FONT = "DejaVu Sans Mono, SFMono-Regular, Menlo, Consolas, monospace"
 
 
 def svg(text: str, caption: str) -> str:
     parts = spans(text)
     plain = "".join(p for p, _ in parts)
-    width = math.ceil(max(len(plain) * CHAR_W, len(caption) * 7.5) + 2 * PAD + 8)
-    height = 2 * PAD + SIZE * 3.4
+    w = math.ceil(max(len(plain) * CHAR_W, len(caption) * 7.5) + 2 * PAD + 20)
+    h = math.ceil(2 * PAD + SIZE * 3.4)
+    # textLength pins every run to its measured width, so a different font
+    # cannot push the line past the edge
     tspans = "".join(
-        '<tspan fill="%s">%s</tspan>' % (c or "#e6e6e6", t.replace("&", "&amp;").replace("<", "&lt;"))
+        '<tspan fill="{}" textLength="{:.1f}" lengthAdjust="spacing">{}</tspan>'.format(
+            c or "#e6e6e6", len(t) * CHAR_W, t.replace("&", "&amp;").replace("<", "&lt;"))
         for t, c in parts
     )
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width:.0f}" height="{height:.0f}" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" font-family="{FONT}">
   <rect width="100%" height="100%" rx="10" fill="#17171b"/>
-  <rect x="{PAD - 8:.0f}" y="{PAD - 6:.0f}" width="{width - 2 * PAD + 16:.0f}" height="{SIZE * 1.8:.0f}" rx="6" fill="none" stroke="#3a3a42"/>
+  <rect x="{PAD - 8:.0f}" y="{PAD - 6:.0f}" width="{w - 2 * PAD + 16:.0f}" height="{SIZE * 1.8:.0f}" rx="6" fill="none" stroke="#3a3a42"/>
   <text x="{PAD:.0f}" y="{PAD + SIZE:.0f}" font-size="{SIZE}" fill="#6b6b76">&gt; {caption}</text>
   <text x="{PAD:.0f}" y="{PAD + SIZE * 2.8:.0f}" font-size="{SIZE}" xml:space="preserve">{tspans}</text>
 </svg>
@@ -56,5 +62,13 @@ def svg(text: str, caption: str) -> str:
 
 if __name__ == "__main__":
     out, caption = sys.argv[1], sys.argv[2]
-    with open(out, "w") as fh:
-        fh.write(svg(sys.stdin.read().rstrip("\n"), caption))
+    body = svg(sys.stdin.read().rstrip("\n"), caption)
+    try:
+        import cairosvg
+    except ImportError:
+        out = out.rsplit(".", 1)[0] + ".svg"
+        with open(out, "w") as fh:
+            fh.write(body)
+    else:
+        cairosvg.svg2png(bytestring=body.encode(), write_to=out, scale=2)
+    print(out)
