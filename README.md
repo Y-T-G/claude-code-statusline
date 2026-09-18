@@ -76,14 +76,15 @@ To wire it by hand instead:
   "statusLine": {
     "type": "command",
     "command": "bash \"/path/to/claude-code-statusline/statusline.sh\" minimal",
-    "refreshInterval": 60
+    "refreshInterval": 30
   }
 }
 ```
 
-`refreshInterval` keeps the reset countdown ticking, and the countdown is minute
-granular, so a minute is often enough. Claude Code also redraws the status line whenever
-token usage or the model changes. Drop the field to redraw only on those changes.
+`refreshInterval` keeps the reset countdown ticking. Context and the model name do not
+need it, because Claude Code redraws the status line whenever token usage or the model
+changes, so drop the field if you only care about those. It does not change how often the
+usage endpoint is called either, since that is gated by the cache, not by the redraw.
 
 ## The Fable weekly window
 
