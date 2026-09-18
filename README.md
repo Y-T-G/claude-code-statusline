@@ -21,17 +21,17 @@
 ## Highlights
 
 **It names the model that is actually answering.** Claude Code can switch models mid
-session, for example when the Opus weekly window runs out, and the payload it hands the
-status line still names the model the session started on. The name here comes from the
-last main loop reply in the session transcript instead, so the field flips to Sonnet on
-the first reply Sonnet writes. Subagent replies are ignored, so a Haiku subagent never
-takes over the field.
+session, for example when the Fable weekly window runs out and replies fall back to Opus,
+and the payload it hands the status line still names the model the session started on. The
+name here comes from the last main loop reply in the session transcript instead, so the
+field flips on the first reply the new model writes. Subagent replies are ignored, so a
+Haiku subagent never takes over the field.
 
 <img alt="model switch" src="assets/model-switch.png">
 
 **It shows the budget, not just the tokens.** Every window the account reports gets a
 percent left and a countdown to its reset: the 5 hour session window, the 7 day window,
-the per-model weekly windows such as Fable, and a spend limit when one applies.
+the Fable weekly window, and a spend limit when one applies.
 
 **It stays quiet about things you cannot act on.** The model name drops noise such as
 `(1M context)`, since the `ctx` field already shows the window, and the session cost in
@@ -84,11 +84,11 @@ To wire it by hand instead:
 `refreshInterval` keeps the reset countdown ticking. Claude Code also redraws the status
 line whenever token usage changes.
 
-## Per-model weekly windows (Fable, Opus, Sonnet)
+## The Fable weekly window
 
-The status line payload carries the session and weekly windows only. Plans that meter a
-model separately, such as the Fable window, have their own bars in `/usage`, and those
-come from the account usage endpoint. Pass `usage-api` to read them too:
+The status line payload carries the overall session and weekly windows only. A model that
+is metered separately, which today is Fable, has its own bar in `/usage`, and that comes
+from the account usage endpoint. Pass `usage-api` to read it too:
 
 ```bash
 ./install.sh minimal usage-api
@@ -96,8 +96,9 @@ come from the account usage endpoint. Pass `usage-api` to read them too:
 
 <img alt="usage-api mode" src="assets/usage-api.png">
 
-Each extra window is labeled with its own name (`fable`, `opus`, `sonnet`) and is shown
-only while the account reports it, so nothing appears if your plan has no such window.
+Each extra window is labeled with its own name, and is shown only while the account
+reports it, so nothing appears if your plan has no such window. Any other scoped window
+the endpoint starts reporting is picked up the same way.
 
 How it works: the script reads the OAuth token from `~/.claude/.credentials.json`, calls
 `GET /api/oauth/usage` on `api.anthropic.com`, and caches the answer for 2 minutes under
