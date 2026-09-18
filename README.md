@@ -21,12 +21,18 @@
 
 | Mode | Fields |
 |------|--------|
-| `minimal` (default) | context window, 5 hour budget left, spend limit left when one applies |
+| `minimal` (default) | model, context window, 5 hour budget left, spend limit left when one applies |
 | `full` | model, directory, context window, 5 hour budget left, 7 day budget left, spend limit left, session cost |
 
 <img alt="full mode" src="assets/full.svg">
 
 Percentages are colored by how much is used: green below 70%, orange to 90%, red above.
+
+The model name drops any parenthesis such as `(1M context)`, since the `ctx` field already
+shows the window. Claude Code can switch models mid session, for example when a weekly
+window runs out, so the name is taken from the last main loop reply in the session
+transcript rather than from the model the session started on. Replies from subagents are
+ignored.
 
 Session cost in USD is hidden when the account reports plan rate limits, because the
 dollar figure means nothing on a subscription. It shows for API key, Bedrock and Vertex

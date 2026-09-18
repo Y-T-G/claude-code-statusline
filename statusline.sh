@@ -2,7 +2,7 @@
 # Status line for Claude Code: context window used and plan budget left.
 #
 # Usage: statusline.sh [minimal|full] [usage-api]
-#   minimal (default)  ctx | 5h left | spend left
+#   minimal (default)  model | ctx | 5h left | spend left
 #   full               model | dir | ctx | 5h left | 7d left | spend left | cost
 #   usage-api          also show the per-model weekly windows (Fable, Opus,
 #                      Sonnet) that the status line payload does not carry
@@ -30,6 +30,21 @@ COST="${CC_STATUSLINE_COST:-auto}"
 IN=$(cat)
 
 command -v jq >/dev/null || { printf 'statusline: jq not installed'; exit 0; }
+
+# The model of the last main loop reply. Claude Code can switch models mid
+# session, for example when a weekly window runs out, and the payload names the
+# session model, so the transcript is what says who actually answered.
+LAST_MODEL=""
+TRANSCRIPT=$(jq -r '.transcript_path // empty' <<<"$IN")
+if [ -z "$TRANSCRIPT" ]; then
+  SESSION=$(jq -r '.session_id // empty' <<<"$IN")
+  [ -n "$SESSION" ] && TRANSCRIPT=$(ls -t "$HOME"/.claude/projects/*/"$SESSION".jsonl 2>/dev/null | head -1)
+fi
+if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
+  LAST_MODEL=$(tail -c 262144 "$TRANSCRIPT" 2>/dev/null \
+    | grep '"type":"assistant"' | grep -v '"isSidechain":true' \
+    | grep -o '"model":"[^"]*"' | tail -1 | cut -d'"' -f4)
+fi
 
 # Per-model weekly windows come from the endpoint /usage reads, not from the
 # status line payload. The cache is served right away and refreshed in the
@@ -73,7 +88,7 @@ if [ "$USAGE_API" = "1" ]; then
   fi
 fi
 
-printf '%s' "$(jq -r --arg mode "$MODE" --arg cost "$COST" --argjson extra "$EXTRA_WINDOWS" '
+printf '%s' "$(jq -r --arg mode "$MODE" --arg cost "$COST" --arg last "$LAST_MODEL" --argjson extra "$EXTRA_WINDOWS" '
   def c(n;s): "\u001b[38;5;" + (n|tostring) + "m" + s + "\u001b[0m";
   def dim(s): c(240; s);
   def k(t): if t >= 1000000 then ((t/1000000*10|floor)/10|tostring) + "M"
@@ -88,6 +103,22 @@ printf '%s' "$(jq -r --arg mode "$MODE" --arg cost "$COST" --argjson extra "$EXT
   def resets($at): if $at == null then ""
     else ($at - now) as $s | if $s <= 0 then "" else " " + dim("(" + clock($s) + ")") end end;
   def budget(txt; used; at): dim(txt + " ") + c(hue(used); pct(100 - used) + " left") + resets(at);
+  # "Opus 5 (1M context)" -> "Opus 5", the window is already in the ctx field
+  def plain($n): $n | sub(" *\\([^)]*\\)$"; "");
+  def pretty($id):
+    ($id | ascii_downcase | sub("[\\[(].*$"; "") | sub("-v[0-9]+:[0-9]+$"; "")) as $l
+    | (["opus", "sonnet", "haiku", "fable"] | map(. as $f | select($l | contains($f))) | first) as $fam
+    | if $fam == null then $id
+      else ([$l | scan("[0-9]+")] | map(select(length <= 2))[0:2] | join(".")) as $ver
+        | ($fam[0:1] | ascii_upcase) + $fam[1:] + (if $ver == "" then "" else " " + $ver end)
+      end;
+  # the session model, unless the transcript shows another family answering
+  def model: plain(.model.display_name) as $n
+    | if $last == "" then $n
+      else pretty($last) as $p
+        | if ($p | ascii_downcase | split(" ")[0]) == ($n | ascii_downcase | split(" ")[0])
+          then $n else $p end
+      end;
   def usd(v): (v * 100 | round) as $c
     | "$" + (($c / 100) | floor | tostring) + "."
           + (($c % 100) | tostring | if length == 1 then "0" + . else . end);
@@ -97,7 +128,7 @@ printf '%s' "$(jq -r --arg mode "$MODE" --arg cost "$COST" --argjson extra "$EXT
   (if $cost == "1" then true elif $cost == "0" then false
    else .rate_limits.five_hour == null end) as $showcost |
 
-  [ (if $full then c(75; .model.display_name) else empty end),
+  [ c(75; model),
 
     (if $full then c(244; (.workspace.current_dir | sub("^" + env.HOME; "~"))) else empty end),
 

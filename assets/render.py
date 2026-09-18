@@ -3,7 +3,7 @@
 
 Usage: statusline.sh full | python3 assets/render.py assets/full.svg "full mode"
 """
-import re, sys
+import math, re, sys
 
 LEVELS = (0, 95, 135, 175, 215, 255)
 BASE16 = ("000000", "800000", "008000", "808000", "000080", "800080", "008080", "c0c0c0",
@@ -31,14 +31,16 @@ def spans(line: str):
     return out
 
 
-CHAR_W, SIZE, PAD = 8.4, 15.0, 18.0
+# 0.62em is a safe advance for the monospace fallbacks, so nothing clips
+SIZE, PAD = 15.0, 18.0
+CHAR_W = SIZE * 0.62
 
 
 def svg(text: str, caption: str) -> str:
     parts = spans(text)
     plain = "".join(p for p, _ in parts)
-    width = max(len(plain) * CHAR_W + 2 * PAD, len(caption) * 7 + 2 * PAD)
-    height = 2 * PAD + SIZE * 3.2
+    width = math.ceil(max(len(plain) * CHAR_W, len(caption) * 7.5) + 2 * PAD + 8)
+    height = 2 * PAD + SIZE * 3.4
     tspans = "".join(
         '<tspan fill="%s">%s</tspan>' % (c or "#e6e6e6", t.replace("&", "&amp;").replace("<", "&lt;"))
         for t, c in parts
