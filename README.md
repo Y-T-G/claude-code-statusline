@@ -1,24 +1,36 @@
-# claude-code-statusline
+<h1 align="center">claude-code-statusline</h1>
 
-A status line for [Claude Code](https://code.claude.com) that shows how much context window
-you have used and how much of your plan budget is left.
+<p align="center">
+  A status line for <a href="https://code.claude.com">Claude Code</a> that shows how much
+  context window you have used and how much of your plan budget is left.
+</p>
 
-```
-ctx 45.2k/1M 4% | 5h 66% left (2h29m)
-```
+<p align="center">
+  <a href="https://code.claude.com"><img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-status%20line-d97757"></a>
+  <a href="https://www.gnu.org/software/bash/"><img alt="bash" src="https://img.shields.io/badge/bash-%3E%3D4.0-4eaa25?logo=gnubash&logoColor=white"></a>
+  <a href="https://jqlang.github.io/jq/"><img alt="jq" src="https://img.shields.io/badge/requires-jq-1e88e5"></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/github/license/Y-T-G/claude-code-statusline?color=blue"></a>
+  <a href="https://github.com/Y-T-G/claude-code-statusline/stargazers"><img alt="stars" src="https://img.shields.io/github/stars/Y-T-G/claude-code-statusline?style=flat"></a>
+</p>
 
-Two modes:
+<p align="center">
+  <img alt="minimal mode" src="assets/minimal.svg">
+</p>
+
+## Modes
 
 | Mode | Fields |
 |------|--------|
 | `minimal` (default) | context window, 5 hour budget left, spend limit left when one applies |
 | `full` | model, directory, context window, 5 hour budget left, 7 day budget left, spend limit left, session cost |
 
-The percentages are colored: green below 70% used, orange to 90%, red above.
+<img alt="full mode" src="assets/full.svg">
+
+Percentages are colored by how much is used: green below 70%, orange to 90%, red above.
 
 Session cost in USD is hidden when the account reports plan rate limits, because the
-dollar figure means nothing on a subscription. It shows for API key and Bedrock or
-Vertex usage. Override with `CC_STATUSLINE_COST=1` or `CC_STATUSLINE_COST=0`.
+dollar figure means nothing on a subscription. It shows for API key, Bedrock and Vertex
+usage. Force it with `CC_STATUSLINE_COST=1`, hide it with `CC_STATUSLINE_COST=0`.
 
 ## Install
 
@@ -50,8 +62,30 @@ To wire it by hand instead:
 }
 ```
 
-`refreshInterval` keeps the reset countdown ticking. Claude Code also redraws the
-status line whenever token usage changes.
+`refreshInterval` keeps the reset countdown ticking. Claude Code also redraws the status
+line whenever token usage changes.
+
+## Per-model weekly windows (Fable, Opus, Sonnet)
+
+The status line payload carries the session and weekly windows only. Plans that meter a
+model separately, such as the Fable window, have their own bars in `/usage`, and those
+come from the account usage endpoint. Pass `usage-api` to read them too:
+
+```bash
+./install.sh minimal usage-api
+```
+
+<img alt="usage-api mode" src="assets/usage-api.svg">
+
+Each extra window is labeled with its own name (`fable`, `opus`, `sonnet`) and is shown
+only while the account reports it, so nothing appears if your plan has no such window.
+
+How it works: the script reads the OAuth token from `~/.claude/.credentials.json`, calls
+`GET /api/oauth/usage` on `api.anthropic.com`, and caches the answer for 2 minutes under
+`~/.cache/claude-code-statusline/`. The cached copy is drawn right away and refreshed in
+the background, so the status line never waits on the network. On any failure the extra
+fields are skipped. This needs a subscription login with the token in a file, so it does
+not work with an API key, or on macOS where the credentials live in the Keychain.
 
 ## Where the numbers come from
 
@@ -65,18 +99,20 @@ Claude Code passes a JSON payload to the status line command on stdin. This scri
 | `rate_limits.spend_limit` | spend limit left, present only on gateway overage |
 | `cost.total_cost_usd` | session cost |
 
-The rate limit numbers are the same ones `/usage` reports. Fields that the payload does
-not carry are skipped, so an API key session shows context and cost only.
+The budget numbers are the same ones `/usage` reports. Fields the payload does not carry
+are skipped, so an API key session shows context and cost only.
 
 ## Adding your own field
 
 If `~/.claude/statusline-extra.sh` exists, it is run with the same JSON on stdin and its
-output is appended. Example that adds a git branch:
+output is appended. Example that adds the git branch:
 
 ```bash
 #!/usr/bin/env bash
 git branch --show-current 2>/dev/null
 ```
+
+The screenshots above are generated from real output with `assets/render.py`.
 
 ## License
 
