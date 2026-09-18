@@ -1,8 +1,9 @@
 <h1 align="center">claude-code-statusline</h1>
 
 <p align="center">
-  A status line for <a href="https://code.claude.com">Claude Code</a> that shows how much
-  context window you have used and how much of your plan budget is left.
+  A status line for <a href="https://code.claude.com">Claude Code</a> that shows which model
+  is answering, how much context window you have used, and how much of your plan budget is
+  left.
 </p>
 
 <p align="center">
@@ -17,6 +18,25 @@
   <img alt="minimal mode" src="assets/minimal.png">
 </p>
 
+## Highlights
+
+**It names the model that is actually answering.** Claude Code can switch models mid
+session, for example when the Opus weekly window runs out, and the payload it hands the
+status line still names the model the session started on. The name here comes from the
+last main loop reply in the session transcript instead, so the field flips to Sonnet on
+the first reply Sonnet writes. Subagent replies are ignored, so a Haiku subagent never
+takes over the field.
+
+<img alt="model switch" src="assets/model-switch.png">
+
+**It shows the budget, not just the tokens.** Every window the account reports gets a
+percent left and a countdown to its reset: the 5 hour session window, the 7 day window,
+the per-model weekly windows such as Fable, and a spend limit when one applies.
+
+**It stays quiet about things you cannot act on.** The model name drops noise such as
+`(1M context)`, since the `ctx` field already shows the window, and the session cost in
+USD is hidden on a subscription, where the dollar figure means nothing.
+
 ## Modes
 
 | Mode | Fields |
@@ -28,15 +48,8 @@
 
 Percentages are colored by how much is used: green below 70%, orange to 90%, red above.
 
-The model name drops any parenthesis such as `(1M context)`, since the `ctx` field already
-shows the window. Claude Code can switch models mid session, for example when a weekly
-window runs out, so the name is taken from the last main loop reply in the session
-transcript rather than from the model the session started on. Replies from subagents are
-ignored.
-
-Session cost in USD is hidden when the account reports plan rate limits, because the
-dollar figure means nothing on a subscription. It shows for API key, Bedrock and Vertex
-usage. Force it with `CC_STATUSLINE_COST=1`, hide it with `CC_STATUSLINE_COST=0`.
+Session cost in USD shows for API key, Bedrock and Vertex usage. Force it with
+`CC_STATUSLINE_COST=1`, hide it with `CC_STATUSLINE_COST=0`.
 
 ## Install
 
@@ -104,6 +117,7 @@ Claude Code passes a JSON payload to the status line command on stdin. This scri
 | `rate_limits.seven_day` | 7 day budget left and reset countdown |
 | `rate_limits.spend_limit` | spend limit left, present only on gateway overage |
 | `cost.total_cost_usd` | session cost |
+| `transcript_path` | the model of the last main loop reply |
 
 The budget numbers are the same ones `/usage` reports. Fields the payload does not carry
 are skipped, so an API key session shows context and cost only.
