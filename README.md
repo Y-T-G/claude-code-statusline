@@ -76,13 +76,14 @@ To wire it by hand instead:
   "statusLine": {
     "type": "command",
     "command": "bash \"/path/to/claude-code-statusline/statusline.sh\" minimal",
-    "refreshInterval": 30
+    "refreshInterval": 60
   }
 }
 ```
 
-`refreshInterval` keeps the reset countdown ticking. Claude Code also redraws the status
-line whenever token usage changes.
+`refreshInterval` keeps the reset countdown ticking, and the countdown is minute
+granular, so a minute is often enough. Claude Code also redraws the status line whenever
+token usage or the model changes. Drop the field to redraw only on those changes.
 
 ## The Fable weekly window
 
@@ -101,11 +102,28 @@ reports it, so nothing appears if your plan has no such window. Any other scoped
 the endpoint starts reporting is picked up the same way.
 
 How it works: the script reads the OAuth token from `~/.claude/.credentials.json`, calls
-`GET /api/oauth/usage` on `api.anthropic.com`, and caches the answer for 2 minutes under
-`~/.cache/claude-code-statusline/`. The cached copy is drawn right away and refreshed in
-the background, so the status line never waits on the network. On any failure the extra
-fields are skipped. This needs a subscription login with the token in a file, so it does
-not work with an API key, or on macOS where the credentials live in the Keychain.
+`GET /api/oauth/usage` on `api.anthropic.com`, and caches the answer under
+`~/.cache/claude-code-statusline/`. The cached copy is drawn right away and the refresh
+runs in the background, so the status line never waits on the network. This needs a
+subscription login with the token in a file, so it does not work with an API key, or on
+macOS where the credentials live in the Keychain.
+
+The request budget is deliberately small. Four rules hold it down:
+
+1. **One fetch per 5 minutes**, no matter how often the status line redraws.
+2. **One fetch in flight per machine.** The lock is a directory, so ten sessions
+   redrawing at once still make one request. A lock left behind by a killed process
+   expires after a minute.
+3. **Nothing while the session is quiet.** If no reply has landed in the transcript for
+   15 minutes, the windows are not moving, so no request goes out. The next reply
+   resumes it.
+4. **Backoff after a failure.** A non-2xx answer or unparseable body leaves the old cache
+   in place and stops fetching for 30 minutes, so a revoked token or a 429 is not retried
+   on every redraw.
+
+That is at most 12 requests an hour per machine while you are working, and none while you
+are not. The knobs are `CC_STATUSLINE_USAGE_TTL`, `CC_STATUSLINE_USAGE_IDLE` and
+`CC_STATUSLINE_USAGE_FAIL_TTL`, all in seconds.
 
 ## Where the numbers come from
 

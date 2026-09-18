@@ -32,7 +32,7 @@ done
 cp "$SETTINGS" "$SETTINGS.bak"
 chmod +x "$SCRIPT"
 jq --arg cmd "bash \"$SCRIPT\" $MODE$USAGE_API" \
-   '.statusLine = {type: "command", command: $cmd, refreshInterval: 30}' \
+   '.statusLine = {type: "command", command: $cmd, refreshInterval: 60}' \
    "$SETTINGS" > "$SETTINGS.tmp"
 mv "$SETTINGS.tmp" "$SETTINGS"
 

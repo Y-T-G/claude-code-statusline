@@ -8,7 +8,11 @@
 #                      Sonnet) that the status line payload does not carry
 #
 # Mode can also be set with CC_STATUSLINE_MODE, the API fetch with
-# CC_STATUSLINE_USAGE_API=1. Arguments win over the variables.
+# CC_STATUSLINE_USAGE_API=1. Arguments win over the variables. The fetch caches
+# for CC_STATUSLINE_USAGE_TTL seconds (default 300), backs off for
+# CC_STATUSLINE_USAGE_FAIL_TTL seconds (default 1800) after a failure, and stops
+# fetching once the session has been quiet for CC_STATUSLINE_USAGE_IDLE seconds
+# (default 900).
 #
 # Session cost in USD is shown only when the account reports no plan rate
 # limits, since the dollar figure means nothing on a subscription. Force it with
@@ -46,28 +50,60 @@ if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
     | grep -o '"model":"[^"]*"' | tail -1 | cut -d'"' -f4)
 fi
 
-# Per-model weekly windows come from the endpoint /usage reads, not from the
-# status line payload. The cache is served right away and refreshed in the
-# background, so drawing the status line never waits on the network.
+# The Fable weekly window comes from the endpoint /usage reads, not from the
+# status line payload. Request budget is kept small on purpose: one fetch per
+# TTL per machine, a single fetch in flight at a time no matter how many
+# sessions are open, no fetch at all while a failure is backing off, and the
+# cached copy drawn right away so no redraw ever waits on the network.
 EXTRA_WINDOWS='[]'
 if [ "$USAGE_API" = "1" ]; then
   CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/claude-code-statusline"
   CACHE="$CACHE_DIR/usage.json"
+  LOCK="$CACHE_DIR/refresh.lock"
+  BACKOFF="$CACHE_DIR/failed-at"
   CREDS="$HOME/.claude/.credentials.json"
-  TTL=120
+  TTL="${CC_STATUSLINE_USAGE_TTL:-300}"
+  FAIL_TTL="${CC_STATUSLINE_USAGE_FAIL_TTL:-1800}"
+  URL="${CC_STATUSLINE_USAGE_URL:-https://api.anthropic.com/api/oauth/usage}"
+  IDLE="${CC_STATUSLINE_USAGE_IDLE:-900}"
 
-  if [ -f "$CREDS" ] && command -v curl >/dev/null; then
-    if [ ! -f "$CACHE" ] || [ "$(( $(date +%s) - $(stat -c %Y "$CACHE" 2>/dev/null || echo 0) ))" -gt "$TTL" ]; then
-      mkdir -p "$CACHE_DIR"
+  age() { echo "$(( $(date +%s) - $(stat -c %Y "$1" 2>/dev/null || echo 0) ))"; }
+
+  # an idle session asks for nothing: no reply has landed in a while, so the
+  # windows are not moving either
+  busy=1
+  if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
+    [ "$(( $(date +%s) - $(stat -c %Y "$TRANSCRIPT" 2>/dev/null || echo 0) ))" -gt "$IDLE" ] && busy=0
+  fi
+
+  if [ "$busy" = "1" ] && [ -f "$CREDS" ] && command -v curl >/dev/null; then
+    mkdir -p "$CACHE_DIR"
+    stale=1
+    [ -f "$CACHE" ] && [ "$(age "$CACHE")" -le "$TTL" ] && stale=0
+    # a failed fetch backs off, so a revoked token or a 429 is not retried on
+    # every redraw
+    [ -f "$BACKOFF" ] && [ "$(age "$BACKOFF")" -le "$FAIL_TTL" ] && stale=0
+    # mkdir is the lock: one fetch in flight per machine, and a lock left
+    # behind by a killed process expires
+    [ -d "$LOCK" ] && [ "$(age "$LOCK")" -gt 60 ] && rmdir "$LOCK" 2>/dev/null
+
+    if [ "$stale" = "1" ] && mkdir "$LOCK" 2>/dev/null; then
       (
+        trap 'rmdir "$LOCK" 2>/dev/null' EXIT
         TOKEN=$(jq -r '.claudeAiOauth.accessToken // empty' "$CREDS" 2>/dev/null)
         [ -n "$TOKEN" ] || exit 0
-        curl -sS --max-time 5 \
-          -H "Authorization: Bearer $TOKEN" \
-          -H "Content-Type: application/json" \
-          -H "anthropic-beta: oauth-2025-04-20" \
-          https://api.anthropic.com/api/oauth/usage \
-          -o "$CACHE.tmp" && mv "$CACHE.tmp" "$CACHE"
+        if curl -sS --fail --max-time 5 --no-progress-meter \
+             -H "Authorization: Bearer $TOKEN" \
+             -H "Content-Type: application/json" \
+             -H "anthropic-beta: oauth-2025-04-20" \
+             "$URL" -o "$CACHE.tmp" \
+           && jq -e . "$CACHE.tmp" >/dev/null 2>&1; then
+          mv "$CACHE.tmp" "$CACHE"
+          rm -f "$BACKOFF" "$CACHE.tmp"
+        else
+          rm -f "$CACHE.tmp"
+          : > "$BACKOFF"
+        fi
       ) >/dev/null 2>&1 &
       disown 2>/dev/null
     fi
