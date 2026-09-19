@@ -143,7 +143,7 @@ printf '%s' "$(jq -r --arg mode "$MODE" --arg cost "$COST" --arg last "$LAST_MOD
   def plain($n): $n | sub(" *\\([^)]*\\)$"; "");
   def pretty($id):
     ($id | ascii_downcase | sub("[\\[(].*$"; "") | sub("-v[0-9]+:[0-9]+$"; "")) as $l
-    | (["opus", "sonnet", "haiku", "fable"] | map(. as $f | select($l | contains($f))) | first) as $fam
+    | (["opus", "sonnet", "haiku", "fable", "gemini"] | map(. as $f | select($l | contains($f))) | first) as $fam
     | if $fam == null then $id
       else ([$l | scan("[0-9]+")] | map(select(length <= 2))[0:2] | join(".")) as $ver
         | ($fam[0:1] | ascii_upcase) + $fam[1:] + (if $ver == "" then "" else " " + $ver end)
