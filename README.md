@@ -92,13 +92,13 @@ To wire it by hand instead:
 }
 ```
 
-`refreshInterval` redraws the countdown. Claude Code redraws on its own when token usage
+`refreshInterval` redraws the countdown. The host CLI redraws on its own when token usage
 or the model changes, and the usage fetch below is gated by its cache, so the interval
 does not change how many requests go out.
 
-## The Fable weekly window
+## The Fable weekly window (Claude Code only)
 
-The payload carries the session and overall weekly windows only. A separately metered
+In Claude Code, the payload carries the session and overall weekly windows only. A separately metered
 model, today Fable, has its own bar in `/usage`, which comes from the account usage
 endpoint. Pass `usage-api` to read it too:
 
@@ -127,7 +127,7 @@ failed fetch keeps the old cache and pauses further attempts.
 
 ## Where the numbers come from
 
-Claude Code passes a JSON payload to the status line command on stdin. This script reads:
+The host CLI passes a JSON payload to the status line command on stdin. This script reads:
 
 | Field | Used for |
 |-------|----------|
@@ -141,7 +141,7 @@ Claude Code passes a JSON payload to the status line command on stdin. This scri
 | `transcript_path` | the model of the last main loop reply |
 
 The budget numbers are the same ones `/usage` reports. Fields the payload does not carry
-are skipped, so an API key session shows context and cost only.
+are skipped, so an API key session (in Claude Code) shows context and cost only.
 
 ## Adding your own field
 
