@@ -174,7 +174,7 @@ printf '%s' "$(jq -r --arg mode "$MODE" --arg cost "$COST" --arg last "$LAST_MOD
 
     (if .rate_limits.five_hour
      then budget("5h"; .rate_limits.five_hour.used_percentage; .rate_limits.five_hour.resets_at)
-     elif .quota."gemini-5h"
+     elif .quota."gemini-5h" and (model | ascii_downcase | contains("gemini"))
      then budget("5h"; ((1 - .quota."gemini-5h".remaining_fraction) * 100); (now + .quota."gemini-5h".reset_in_seconds))
      elif .quota."3p-5h"
      then budget("5h"; ((1 - .quota."3p-5h".remaining_fraction) * 100); (now + .quota."3p-5h".reset_in_seconds))
@@ -182,7 +182,7 @@ printf '%s' "$(jq -r --arg mode "$MODE" --arg cost "$COST" --arg last "$LAST_MOD
 
     (if $full and .rate_limits.seven_day
      then budget("7d"; .rate_limits.seven_day.used_percentage; .rate_limits.seven_day.resets_at)
-     elif $full and .quota."gemini-weekly"
+     elif $full and .quota."gemini-weekly" and (model | ascii_downcase | contains("gemini"))
      then budget("7d"; ((1 - .quota."gemini-weekly".remaining_fraction) * 100); (now + .quota."gemini-weekly".reset_in_seconds))
      elif $full and .quota."3p-weekly"
      then budget("7d"; ((1 - .quota."3p-weekly".remaining_fraction) * 100); (now + .quota."3p-weekly".reset_in_seconds))
