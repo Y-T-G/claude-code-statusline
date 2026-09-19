@@ -46,6 +46,8 @@ account reports plan rate limits. `CC_STATUSLINE_COST=1` forces it, `=0` hides i
 
 Needs `bash` and `jq`.
 
+### Claude Code
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | bash
 ```
@@ -56,19 +58,26 @@ To install in `full` mode or with `usage-api`:
 curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | bash -s -- full usage-api
 ```
 
-### Google Antigravity (`agy`) Support
+### Google Antigravity (`agy`)
 
-This status line natively supports both Claude Code and Google Antigravity (`agy`). To install it for `agy`:
+This status line natively parses the distinct `quota` schema used by `agy`. To install it, point the installer to the Antigravity config directory:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | CLAUDE_CONFIG_DIR=~/.gemini/antigravity-cli bash
 ```
 
-The installer writes the `statusLine` entry in `~/.claude/settings.json` (or `$CLAUDE_CONFIG_DIR/settings.json` if set) and keeps a
-backup at `~/.claude/settings.json.bak`. To remove it:
+*(You can also append `-s -- full` to install full mode).*
+
+### Uninstallation
+
+The installer downloads `statusline.sh` to your config directory and adds a `statusLine` entry to `settings.json`, keeping a backup at `.bak`. To safely remove it:
 
 ```bash
+# For Claude Code:
 curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | bash -s -- --uninstall
+
+# For Antigravity (agy):
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | CLAUDE_CONFIG_DIR=~/.gemini/antigravity-cli bash -s -- --uninstall
 ```
 
 To wire it by hand instead:
@@ -101,7 +110,7 @@ curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | 
 
 Each window is labeled with its own name and shown only while the account reports it.
 
-This reads the OAuth token from `~/.claude/.credentials.json` and calls
+This reads the OAuth token from `~/.claude/.credentials.json` (or `$CLAUDE_CONFIG_DIR/.credentials.json`) and calls
 `GET /api/oauth/usage`, so it needs a subscription login with the token in a file. It does
 not work with an API key, or on macOS where the credentials live in the Keychain.
 
@@ -136,7 +145,7 @@ are skipped, so an API key session shows context and cost only.
 
 ## Adding your own field
 
-If `~/.claude/statusline-extra.sh` exists, it is run with the same JSON on stdin and its
+If `~/.claude/statusline-extra.sh` (or `$CLAUDE_CONFIG_DIR/statusline-extra.sh`) exists, it is run with the same JSON on stdin and its
 output is appended. Example that adds the git branch:
 
 ```bash
