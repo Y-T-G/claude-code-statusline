@@ -20,22 +20,13 @@
 
 ## Highlights
 
-**It names the model that is actually answering.** Claude Code can switch models mid
-session, for example when the Fable weekly window runs out and replies fall back to Opus,
-and the payload it hands the status line still names the model the session started on. The
-name here comes from the last main loop reply in the session transcript instead, so the
-field flips on the first reply the new model writes. Subagent replies are ignored, so a
-Haiku subagent never takes over the field.
+- **The model that is answering.** A mid-session model switch, such as a fallback when a
+  weekly window runs out, moves the field on the new model's first reply.
+- **Budget left, not just tokens spent.** Percent left and a countdown to reset for every
+  window the account reports.
+- **Context window** in tokens and percent of the window in use.
 
 <img alt="model switch" src="assets/model-switch.png">
-
-**It shows the budget, not just the tokens.** Every window the account reports gets a
-percent left and a countdown to its reset: the 5 hour session window, the 7 day window,
-the Fable weekly window, and a spend limit when one applies.
-
-**It stays quiet about things you cannot act on.** The model name drops noise such as
-`(1M context)`, since the `ctx` field already shows the window, and the session cost in
-USD is hidden on a subscription, where the dollar figure means nothing.
 
 ## Modes
 
@@ -48,8 +39,8 @@ USD is hidden on a subscription, where the dollar figure means nothing.
 
 Percentages are colored by how much is used: green below 70%, orange to 90%, red above.
 
-Session cost in USD shows for API key, Bedrock and Vertex usage. Force it with
-`CC_STATUSLINE_COST=1`, hide it with `CC_STATUSLINE_COST=0`.
+Session cost in USD shows for API key, Bedrock and Vertex usage, and is hidden when the
+account reports plan rate limits. `CC_STATUSLINE_COST=1` forces it, `=0` hides it.
 
 ## Install
 
@@ -81,16 +72,15 @@ To wire it by hand instead:
 }
 ```
 
-`refreshInterval` keeps the reset countdown ticking. Context and the model name do not
-need it, because Claude Code redraws the status line whenever token usage or the model
-changes, so drop the field if you only care about those. It does not change how often the
-usage endpoint is called either, since that is gated by the cache, not by the redraw.
+`refreshInterval` redraws the countdown. Claude Code redraws on its own when token usage
+or the model changes, and the usage fetch below is gated by its cache, so the interval
+does not change how many requests go out.
 
 ## The Fable weekly window
 
-The status line payload carries the overall session and weekly windows only. A model that
-is metered separately, which today is Fable, has its own bar in `/usage`, and that comes
-from the account usage endpoint. Pass `usage-api` to read it too:
+The payload carries the session and overall weekly windows only. A separately metered
+model, today Fable, has its own bar in `/usage`, which comes from the account usage
+endpoint. Pass `usage-api` to read it too:
 
 ```bash
 ./install.sh minimal usage-api
@@ -98,33 +88,22 @@ from the account usage endpoint. Pass `usage-api` to read it too:
 
 <img alt="usage-api mode" src="assets/usage-api.png">
 
-Each extra window is labeled with its own name, and is shown only while the account
-reports it, so nothing appears if your plan has no such window. Any other scoped window
-the endpoint starts reporting is picked up the same way.
+Each window is labeled with its own name and shown only while the account reports it.
 
-How it works: the script reads the OAuth token from `~/.claude/.credentials.json`, calls
-`GET /api/oauth/usage` on `api.anthropic.com`, and caches the answer under
-`~/.cache/claude-code-statusline/`. The cached copy is drawn right away and the refresh
-runs in the background, so the status line never waits on the network. This needs a
-subscription login with the token in a file, so it does not work with an API key, or on
-macOS where the credentials live in the Keychain.
+This reads the OAuth token from `~/.claude/.credentials.json` and calls
+`GET /api/oauth/usage`, so it needs a subscription login with the token in a file. It does
+not work with an API key, or on macOS where the credentials live in the Keychain.
 
-The request budget is deliberately small. Four rules hold it down:
+The answer is cached in `~/.cache/claude-code-statusline/` and refreshed in the
+background, so no redraw waits on the network. At most one request is in flight per
+machine and the ceiling is 12 an hour, dropping to none while the session is idle. A
+failed fetch keeps the old cache and pauses further attempts.
 
-1. **One fetch per 5 minutes**, no matter how often the status line redraws.
-2. **One fetch in flight per machine.** The lock is a directory, so ten sessions
-   redrawing at once still make one request. A lock left behind by a killed process
-   expires after a minute.
-3. **Nothing while the session is quiet.** If no reply has landed in the transcript for
-   15 minutes, the windows are not moving, so no request goes out. The next reply
-   resumes it.
-4. **Backoff after a failure.** A non-2xx answer or unparseable body leaves the old cache
-   in place and stops fetching for 30 minutes, so a revoked token or a 429 is not retried
-   on every redraw.
-
-That is at most 12 requests an hour per machine while you are working, and none while you
-are not. The knobs are `CC_STATUSLINE_USAGE_TTL`, `CC_STATUSLINE_USAGE_IDLE` and
-`CC_STATUSLINE_USAGE_FAIL_TTL`, all in seconds.
+| Variable | Default | Effect |
+|----------|---------|--------|
+| `CC_STATUSLINE_USAGE_TTL` | 300 | seconds a cached answer is used for |
+| `CC_STATUSLINE_USAGE_IDLE` | 900 | seconds of session silence after which fetching stops |
+| `CC_STATUSLINE_USAGE_FAIL_TTL` | 1800 | seconds to wait after a failed fetch |
 
 ## Where the numbers come from
 
