@@ -47,17 +47,20 @@ account reports plan rate limits. `CC_STATUSLINE_COST=1` forces it, `=0` hides i
 Needs `bash` and `jq`.
 
 ```bash
-git clone https://github.com/Y-T-G/claude-code-statusline.git
-cd claude-code-statusline
-./install.sh            # minimal mode
-./install.sh full       # full mode
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | bash
+```
+
+To install in `full` mode or with `usage-api`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | bash -s -- full usage-api
 ```
 
 The installer writes the `statusLine` entry in `~/.claude/settings.json` and keeps a
 backup at `~/.claude/settings.json.bak`. To remove it:
 
 ```bash
-./install.sh --uninstall
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | bash -s -- --uninstall
 ```
 
 To wire it by hand instead:
@@ -83,7 +86,7 @@ model, today Fable, has its own bar in `/usage`, which comes from the account us
 endpoint. Pass `usage-api` to read it too:
 
 ```bash
-./install.sh minimal usage-api
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | bash -s -- minimal usage-api
 ```
 
 <img alt="usage-api mode" src="assets/usage-api.png">

@@ -7,7 +7,15 @@
 set -euo pipefail
 
 SETTINGS="$HOME/.claude/settings.json"
-SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/statusline.sh"
+
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "$(dirname "${BASH_SOURCE[0]}")/statusline.sh" ]; then
+  SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/statusline.sh"
+  DOWNLOAD=0
+else
+  SCRIPT="$HOME/.claude/statusline.sh"
+  DOWNLOAD=1
+fi
+
 MODE="minimal"
 USAGE_API=""
 
@@ -28,6 +36,11 @@ for arg in "$@"; do
     *) echo "install: unknown argument $arg" >&2; exit 1 ;;
   esac
 done
+
+if [ "$DOWNLOAD" = 1 ]; then
+  echo "Downloading statusline.sh to $SCRIPT..."
+  curl -fsSL "https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/statusline.sh" -o "$SCRIPT"
+fi
 
 cp "$SETTINGS" "$SETTINGS.bak"
 chmod +x "$SCRIPT"
