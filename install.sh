@@ -6,13 +6,14 @@
 #   ./install.sh --uninstall                  remove the statusLine entry
 set -euo pipefail
 
-SETTINGS="$HOME/.claude/settings.json"
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+SETTINGS="$CLAUDE_DIR/settings.json"
 
 if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "$(dirname "${BASH_SOURCE[0]}")/statusline.sh" ]; then
   SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/statusline.sh"
   DOWNLOAD=0
 else
-  SCRIPT="$HOME/.claude/statusline.sh"
+  SCRIPT="$CLAUDE_DIR/statusline.sh"
   DOWNLOAD=1
 fi
 

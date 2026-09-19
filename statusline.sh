@@ -42,7 +42,7 @@ LAST_MODEL=""
 TRANSCRIPT=$(jq -r '.transcript_path // empty' <<<"$IN")
 if [ -z "$TRANSCRIPT" ]; then
   SESSION=$(jq -r '.session_id // empty' <<<"$IN")
-  [ -n "$SESSION" ] && TRANSCRIPT=$(ls -t "$HOME"/.claude/projects/*/"$SESSION".jsonl 2>/dev/null | head -1)
+  [ -n "$SESSION" ] && TRANSCRIPT=$(ls -t "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/projects/*/"$SESSION".jsonl 2>/dev/null | head -1)
 fi
 if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
   LAST_MODEL=$(tail -c 262144 "$TRANSCRIPT" 2>/dev/null \
@@ -61,7 +61,7 @@ if [ "$USAGE_API" = "1" ]; then
   CACHE="$CACHE_DIR/usage.json"
   LOCK="$CACHE_DIR/refresh.lock"
   BACKOFF="$CACHE_DIR/failed-at"
-  CREDS="$HOME/.claude/.credentials.json"
+  CREDS="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.credentials.json"
   TTL="${CC_STATUSLINE_USAGE_TTL:-300}"
   FAIL_TTL="${CC_STATUSLINE_USAGE_FAIL_TTL:-1800}"
   URL="${CC_STATUSLINE_USAGE_URL:-https://api.anthropic.com/api/oauth/usage}"
@@ -190,7 +190,7 @@ printf '%s' "$(jq -r --arg mode "$MODE" --arg cost "$COST" --arg last "$LAST_MOD
   ] | join(c(238; " | "))
 ' <<<"$IN")"
 
-EXTRA="$HOME/.claude/statusline-extra.sh"
+EXTRA="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/statusline-extra.sh"
 if [ -f "$EXTRA" ]; then
   OUT=$(bash "$EXTRA" <<<"$IN" 2>/dev/null)
   [ -n "$OUT" ] && printf ' %s' "$OUT"

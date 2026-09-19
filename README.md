@@ -56,7 +56,7 @@ To install in `full` mode or with `usage-api`:
 curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | bash -s -- full usage-api
 ```
 
-The installer writes the `statusLine` entry in `~/.claude/settings.json` and keeps a
+The installer writes the `statusLine` entry in `~/.claude/settings.json` (or `$CLAUDE_CONFIG_DIR/settings.json` if set) and keeps a
 backup at `~/.claude/settings.json.bak`. To remove it:
 
 ```bash
