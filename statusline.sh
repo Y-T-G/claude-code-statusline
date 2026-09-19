@@ -57,7 +57,7 @@ fi
 # cached copy drawn right away so no redraw ever waits on the network.
 EXTRA_WINDOWS='[]'
 if [ "$USAGE_API" = "1" ]; then
-  CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/claude-code-statusline"
+  CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/statusline"
   CACHE="$CACHE_DIR/usage.json"
   LOCK="$CACHE_DIR/refresh.lock"
   BACKOFF="$CACHE_DIR/failed-at"

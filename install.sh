@@ -40,7 +40,7 @@ done
 
 if [ "$DOWNLOAD" = 1 ]; then
   echo "Downloading statusline.sh to $SCRIPT..."
-  curl -fsSL "https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/statusline.sh" -o "$SCRIPT"
+  curl -fsSL "https://raw.githubusercontent.com/Y-T-G/statusline/main/statusline.sh" -o "$SCRIPT"
 fi
 
 cp "$SETTINGS" "$SETTINGS.bak"

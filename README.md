@@ -1,4 +1,4 @@
-<h1 align="center">claude-code-statusline</h1>
+<h1 align="center">statusline</h1>
 
 <p align="center">
   A status line for <a href="https://code.claude.com">Claude Code</a> and Google Antigravity (agy) that shows which model
@@ -10,8 +10,8 @@
   <a href="https://code.claude.com"><img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-status%20line-d97757"></a>
   <a href="https://www.gnu.org/software/bash/"><img alt="bash" src="https://img.shields.io/badge/bash-%3E%3D4.0-4eaa25?logo=gnubash&logoColor=white"></a>
   <a href="https://jqlang.github.io/jq/"><img alt="jq" src="https://img.shields.io/badge/requires-jq-1e88e5"></a>
-  <a href="LICENSE"><img alt="license" src="https://img.shields.io/github/license/Y-T-G/claude-code-statusline?color=blue"></a>
-  <a href="https://github.com/Y-T-G/claude-code-statusline/stargazers"><img alt="stars" src="https://img.shields.io/github/stars/Y-T-G/claude-code-statusline?style=flat"></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/github/license/Y-T-G/statusline?color=blue"></a>
+  <a href="https://github.com/Y-T-G/statusline/stargazers"><img alt="stars" src="https://img.shields.io/github/stars/Y-T-G/statusline?style=flat"></a>
 </p>
 
 <p align="center">
@@ -47,13 +47,13 @@ account reports plan rate limits. `CC_STATUSLINE_COST=1` forces it, `=0` hides i
 Needs `bash` and `jq`.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | bash
 ```
 
 To install in `full` mode or with `usage-api`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | bash -s -- full usage-api
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | bash -s -- full usage-api
 ```
 
 ### Google Antigravity (`agy`) Support
@@ -61,14 +61,14 @@ curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/i
 This status line natively supports both Claude Code and Google Antigravity (`agy`). To install it for `agy`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | CLAUDE_CONFIG_DIR=~/.gemini/antigravity-cli bash
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | CLAUDE_CONFIG_DIR=~/.gemini/antigravity-cli bash
 ```
 
 The installer writes the `statusLine` entry in `~/.claude/settings.json` (or `$CLAUDE_CONFIG_DIR/settings.json` if set) and keeps a
 backup at `~/.claude/settings.json.bak`. To remove it:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | bash -s -- --uninstall
 ```
 
 To wire it by hand instead:
@@ -77,7 +77,7 @@ To wire it by hand instead:
 {
   "statusLine": {
     "type": "command",
-    "command": "bash \"/path/to/claude-code-statusline/statusline.sh\" minimal",
+    "command": "bash \"/path/to/statusline/statusline.sh\" minimal",
     "refreshInterval": 30
   }
 }
@@ -94,7 +94,7 @@ model, today Fable, has its own bar in `/usage`, which comes from the account us
 endpoint. Pass `usage-api` to read it too:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | bash -s -- minimal usage-api
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/statusline/main/install.sh | bash -s -- minimal usage-api
 ```
 
 <img alt="usage-api mode" src="assets/usage-api.png">
@@ -105,7 +105,7 @@ This reads the OAuth token from `~/.claude/.credentials.json` and calls
 `GET /api/oauth/usage`, so it needs a subscription login with the token in a file. It does
 not work with an API key, or on macOS where the credentials live in the Keychain.
 
-The answer is cached in `~/.cache/claude-code-statusline/` and refreshed in the
+The answer is cached in `~/.cache/statusline/` and refreshed in the
 background, so no redraw waits on the network. At most one request is in flight per
 machine and the ceiling is 12 an hour, dropping to none while the session is idle. A
 failed fetch keeps the old cache and pauses further attempts.
