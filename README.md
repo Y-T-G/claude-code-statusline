@@ -1,7 +1,7 @@
 <h1 align="center">claude-code-statusline</h1>
 
 <p align="center">
-  A status line for <a href="https://code.claude.com">Claude Code</a> that shows which model
+  A status line for <a href="https://code.claude.com">Claude Code</a> and Google Antigravity (agy) that shows which model
   is answering, how much context window you have used, and how much of your plan budget is
   left.
 </p>
@@ -54,6 +54,14 @@ To install in `full` mode or with `usage-api`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | bash -s -- full usage-api
+```
+
+### Google Antigravity (`agy`) Support
+
+This status line natively supports both Claude Code and Google Antigravity (`agy`). To install it for `agy`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Y-T-G/claude-code-statusline/main/install.sh | CLAUDE_CONFIG_DIR=~/.gemini/antigravity-cli bash
 ```
 
 The installer writes the `statusLine` entry in `~/.claude/settings.json` (or `$CLAUDE_CONFIG_DIR/settings.json` if set) and keeps a
@@ -115,8 +123,10 @@ Claude Code passes a JSON payload to the status line command on stdin. This scri
 | Field | Used for |
 |-------|----------|
 | `context_window.total_input_tokens`, `.context_window_size`, `.used_percentage` | the `ctx` field |
-| `rate_limits.five_hour` | 5 hour budget left and reset countdown |
-| `rate_limits.seven_day` | 7 day budget left and reset countdown |
+| `rate_limits.five_hour` | 5 hour budget left and reset countdown (Claude Code) |
+| `quota."gemini-5h"`, `"3p-5h"` | 5 hour budget left and reset countdown (agy) |
+| `rate_limits.seven_day` | 7 day budget left and reset countdown (Claude Code) |
+| `quota."gemini-weekly"`, `"3p-weekly"` | 7 day budget left and reset countdown (agy) |
 | `rate_limits.spend_limit` | spend limit left, present only on gateway overage |
 | `cost.total_cost_usd` | session cost |
 | `transcript_path` | the model of the last main loop reply |
