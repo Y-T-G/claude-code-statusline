@@ -1,7 +1,7 @@
 <h1 align="center">statusline</h1>
 
 <p align="center">
-  A status line for <a href="https://code.claude.com">Claude Code</a> and Google Antigravity (agy) that shows which model
+  A status line for <a href="https://code.claude.com">Claude Code</a> and <a href="https://antigravity.google">Google Antigravity</a> (agy) that shows which model
   is answering, how much context window you have used, and how much of your plan budget is
   left.
 </p>
